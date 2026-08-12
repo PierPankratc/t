@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ tutor.name }} — Профиль{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-4">
+    {% if tutor.avatar and tutor.avatar.url %}
+      <img src="{{ tutor.avatar.url }}" class="img-fluid rounded mb-3 tutor-photo" alt="{{ tutor.name }}">
+    {% else %}
+      <img src="/media/photos/OIP-2342034818.jpg" class="img-fluid rounded mb-3 tutor-photo" alt="{{ tutor.name }}">
+    {% endif %}
+    <ul class="list-group">
+      <li class="list-group-item"><strong>Имя:</strong> {{ tutor.name }}</li>
+      <li class="list-group-item"><strong>Email:</strong> {{ tutor.email }}</li>
+      <li class="list-group-item"><strong>Телефон:</strong> {{ tutor.phone_number }}</li>
+      <li class="list-group-item"><strong>Возраст:</strong> {{ tutor.age|default:"—" }}</li>
+      <li class="list-group-item"><strong>Высшее образование:</strong> {{ tutor.is_high_edu|yesno:"Да,Нет" }}</li>
+    </ul>
+  </div>
+  <div class="col-md-8">
+    <h3>О репетиторе</h3>
+    <p>{{ tutor.description|default:"Нет описания" }}</p>
+
+    <h4 class="mt-4">Предметы</h4>
+    <ul>
+      {% for d in disciplines %}
+        <li>{{ d.name }} — {{ d.price }} ₽ за {{ d.durations }} мин</li>
+      {% empty %}
+        <li>Нет предметов</li>
+      {% endfor %}
+    </ul>
+
+    <h4 class="mt-4">Отзывы</h4>
+    {% for r in reviews %}
+      <div class="border rounded p-2 mb-2">
+        <strong>Оценка:</strong> {{ r.grade }}<br>
+        <p>{{ r.review }}</p>
+      </div>
+    {% empty %}
+      <p>Нет отзывов</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

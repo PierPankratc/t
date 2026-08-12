@@ -5,10 +5,11 @@ from app.models import Discipline, Reviews, Tutor, User
 # Register your models here.
 @admin.register(Tutor)
 class TutorAdmin(admin.ModelAdmin):
-    list_display = ['name', 'email', 'phone_number', 'age', 'is_blocked', 'is_high_edu']
-    list_filter = ['name', 'email', 'is_high_edu','is_blocked']
+    list_display = ['name', 'email', 'phone_number', 'age', 'is_blocked', 'is_high_edu', 'created_at']
+    list_filter = ['name', 'email', 'is_high_edu','is_blocked', 'created_at']
     search_fields = ['name', 'email']
     prepopulated_fields = {'slug': ('name',)}
+    list_editable = ['is_blocked', 'is_high_edu']
     # ordering = ['-rating']
     # readonly_fields = ['id']
 
@@ -18,7 +19,7 @@ class DisciplineAdmin(admin.ModelAdmin):
     list_display = ['name', 'durations', 'price', 'tutor']
     list_filter = ['name', 'durations', 'price', 'tutor']
     prepopulated_fields = {'slug': ('name',)}
-    search_fields = ['name']
+    search_fields = ['name', 'name']
 
 
 @admin.register(Reviews)
@@ -30,7 +31,8 @@ class ReviewsAdmin(admin.ModelAdmin):
     
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['id','name']
-    list_filter = ['id', 'name']
+    list_display = ['id','name', 'created_at', 'is_blocked']
+    list_filter = ['id', 'name', 'created_at', 'is_blocked']
+    list_editable = ['is_blocked']
     search_fields = ['name']
     # autocomplete_fields = ['tutor', 'discipline']

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+  {% for tutor in tutors %}
+    <div class="col-md-4 mb-3">
+      <div class="card h-100">
+        {% if tutor.avatar and tutor.avatar.url %}
+          <img src="{{ tutor.avatar.url }}" class="card-img-top tutor-photo-sm" alt="{{ tutor.name }}">
+        {% else %}
+          <img src="/media/photos/OIP-2342034818.jpg" class="card-img-top tutor-photo-sm" alt="{{ tutor.name }}">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ tutor.name }}</h5>
+          <p class="card-text">{{ tutor.description|default:"Нет описания" }}</p>
+          <p class="small"><strong>Email:</strong> {{ tutor.email }}<br><strong>Тел:</strong> {{ tutor.phone_number }}</p>
+          <a href="{% url 'tutors:detail' tutor.slug %}" class="btn btn-primary">Открыть</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p>Не найдено.</p>
+  {% endfor %}
+</div>
+{% endblock %}
