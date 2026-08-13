@@ -10,6 +10,7 @@ class TutorAdmin(admin.ModelAdmin):
     search_fields = ['name', 'email']
     prepopulated_fields = {'slug': ('name',)}
     list_editable = ['is_blocked', 'is_high_edu']
+    filter_horizontal = ['favorites_by']
     # ordering = ['-rating']
     # readonly_fields = ['id']
 

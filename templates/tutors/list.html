@@ -1,6 +1,39 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+  .favorite-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+  }
+  
+  .favorite-btn.not-favorite {
+    color: #ddd;
+  }
+  
+  .favorite-btn.is-favorite {
+    color: #ff6b6b;
+  }
+  
+  .favorite-btn:hover {
+    transform: scale(1.2);
+  }
+  
+  .btn-favorites {
+    margin-bottom: 1rem;
+  }
+</style>
+
+<div class="mb-3">
+  <a href="{% url 'tutors:favorites' %}" class="btn btn-outline-danger btn-favorites">
+    ❤️ Мои избранные преподаватели
+  </a>
+</div>
+
 <div class="row">
   {% for tutor in tutors %}
     <div class="col-md-4 mb-3">
@@ -11,7 +44,12 @@
           <img src="/media/photos/OIP-2342034818.jpg" class="card-img-top tutor-photo-sm" alt="{{ tutor.name }}">
         {% endif %}
         <div class="card-body">
-          <h5 class="card-title">{{ tutor.name }}</h5>
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="card-title">{{ tutor.name }}</h5>
+            <button class="favorite-btn not-favorite" data-tutor-slug="{{ tutor.slug }}" title="Добавить в избранное">
+              ♡
+            </button>
+          </div>
           <p class="card-text">{{ tutor.description|default:"Нет описания" }}</p>
           <p class="small"><strong>Email:</strong> {{ tutor.email }}<br><strong>Тел:</strong> {{ tutor.phone_number }}</p>
           <a href="{% url 'tutors:detail' tutor.slug %}" class="btn btn-primary">Открыть</a>
@@ -22,4 +60,55 @@
     <p>Не найдено.</p>
   {% endfor %}
 </div>
+
+<script>
+document.querySelectorAll('.favorite-btn').forEach(button => {
+  button.addEventListener('click', function(e) {
+    e.preventDefault();
+    const tutorSlug = this.dataset.tutorSlug;
+    const btn = this;
+    
+    // Получить CSRF токен из мета-тега
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    
+    fetch(`/tutors/${tutorSlug}/toggle-favorite/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        if (data.is_favorite) {
+          btn.classList.remove('not-favorite');
+          btn.classList.add('is-favorite');
+          btn.textContent = '♥';
+          btn.title = 'Удалить из избранного';
+        } else {
+          btn.classList.remove('is-favorite');
+          btn.classList.add('not-favorite');
+          btn.textContent = '♡';
+          btn.title = 'Добавить в избранное';
+        }
+        console.log(data.message);
+      } else if (data.error) {
+        console.error('Error:', data.error);
+        alert('Ошибка: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Ошибка при добавлении в избранное: ' + error.message);
+    });
+  });
+});
+</script>
 {% endblock %}

@@ -33,6 +33,7 @@ class Tutor(models.Model):
     age = models.IntegerField(blank=True, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name='Возраст')
     description = models.TextField(max_length=250, blank=True, verbose_name='Подробнее')
     created_at = models.DateField(auto_now_add=True, verbose_name='Дата регистрации')
+    favorites_by = models.ManyToManyField(User, related_name='favorite_tutors', blank=True, verbose_name='В избранном у')
 
 
     class Meta:
