@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% block title %}Мои избранные - Репетиторы Online{% endblock %}
+
 {% block content %}
 <style>
   .favorite-btn {
@@ -26,7 +28,7 @@
 
 <div class="mb-4">
   <h2>❤️ Мои избранные преподаватели</h2>
-  <a href="{% url 'tutors:list' %}" class="btn btn-secondary mt-2">← Вернуться к списку</a>
+  <a href="{% url 'app:tutors_list' %}" class="btn btn-secondary mt-2">← Вернуться к списку</a>
 </div>
 
 {% if tutors %}
@@ -34,26 +36,29 @@
     {% for tutor in tutors %}
       <div class="col-md-4 mb-3">
         <div class="card h-100">
-          {% if tutor.avatar and tutor.avatar.url %}
-            <img src="{{ tutor.avatar.url }}" class="card-img-top tutor-photo-sm" alt="{{ tutor.name }}">
+          {% if tutor.user.profile.avatar and tutor.user.profile.avatar.url %}
+            <img src="{{ tutor.user.profile.avatar.url }}" class="card-img-top tutor-photo-sm" alt="{{ tutor.user.get_full_name }}">
           {% else %}
-            <img src="/media/photos/OIP-2342034818.jpg" class="card-img-top tutor-photo-sm" alt="{{ tutor.name }}">
+            <div class="card-img-top tutor-photo-sm bg-secondary d-flex align-items-center justify-content-center text-white">
+              <span>Нет фото</span>
+            </div>
           {% endif %}
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
-              <h5 class="card-title">{{ tutor.name }}</h5>
+              <div>
+                <h5 class="card-title mb-0">{{ tutor.user.get_full_name }}</h5>
+                <small class="text-warning">⭐ {{ tutor.average_rating }}/5</small>
+              </div>
               <button class="favorite-btn is-favorite" data-tutor-slug="{{ tutor.slug }}" title="Удалить из избранного">
                 ♥
               </button>
             </div>
-            <p class="card-text">{{ tutor.description|default:"Нет описания" }}</p>
-            <p class="small">
-              <strong>Email:</strong> {{ tutor.email }}<br>
-              <strong>Тел:</strong> {{ tutor.phone_number }}<br>
-              <strong>Возраст:</strong> {{ tutor.age }}<br>
-              <strong>Высшее образование:</strong> {% if tutor.is_high_edu %}Да{% else %}Нет{% endif %}
+            <p class="card-text small">{{ tutor.bio|truncatewords:15|default:"Нет описания" }}</p>
+            <p class="small mb-2">
+              <strong>Опыт:</strong> {{ tutor.experience_years }} лет<br>
+              {% if tutor.is_high_edu %}<strong>✓</strong> Высшее образование{% endif %}
             </p>
-            <a href="{% url 'tutors:detail' tutor.slug %}" class="btn btn-primary">Открыть профиль</a>
+            <a href="{% url 'app:tutor_detail' tutor.slug %}" class="btn btn-primary btn-sm w-100">Открыть профиль</a>
           </div>
         </div>
       </div>
@@ -62,7 +67,7 @@
 {% else %}
   <div class="alert alert-info" role="alert">
     <h4 class="alert-heading">Пока нет избранных</h4>
-    <p>Вы еще не добавили ни одного преподавателя в избранное. Перейдите к <a href="{% url 'tutors:list' %}">списку преподавателей</a> и добавьте интересующих вас!</p>
+    <p>Вы еще не добавили ни одного преподавателя в избранное. Перейдите к <a href="{% url 'app:tutors_list' %}">списку преподавателей</a> и добавьте интересующих вас!</p>
   </div>
 {% endif %}
 
@@ -73,7 +78,6 @@ document.querySelectorAll('.favorite-btn').forEach(button => {
     const tutorSlug = this.dataset.tutorSlug;
     const btn = this;
     
-    // Получить CSRF токен из мета-тега
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     
     fetch(`/tutors/${tutorSlug}/toggle-favorite/`, {
@@ -92,14 +96,12 @@ document.querySelectorAll('.favorite-btn').forEach(button => {
     })
     .then(data => {
       if (data.success) {
-        // Удалить карточку с анимацией
         const card = btn.closest('.col-md-4');
         if (card) {
           card.style.opacity = '0';
           card.style.transform = 'translateY(-20px)';
           setTimeout(() => {
             card.remove();
-            // Проверить, нет ли больше карточек
             if (document.querySelectorAll('.col-md-4').length === 0) {
               location.reload();
             }

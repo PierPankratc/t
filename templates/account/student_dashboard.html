@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Мой кабинет (Студент) - Репетиторы Online{% endblock %}
+
+{% block content %}
+<div class="row mt-4 mb-4">
+  <div class="col">
+    <h1>Личный кабинет</h1>
+    <p class="text-muted">Добро пожаловать, {{ user.first_name }}!</p>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <h3>{{ favorites.count }}</h3>
+        <p class="text-muted">Избранные репетиторы</p>
+        <a href="{% url 'app:favorites' %}" class="btn btn-sm btn-primary">Перейти</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <h3>{{ lessons.count }}</h3>
+        <p class="text-muted">Забронированные уроки</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <h3>{{ reviews.count }}</h3>
+        <p class="text-muted">Написано отзывов</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <p class="mb-0">{{ user.email }}</p>
+        <p class="text-muted">Email</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Избранные репетиторы</h5>
+      </div>
+      <div class="card-body">
+        {% if favorites %}
+          <div class="list-group">
+            {% for tutor in favorites %}
+              <a href="{% url 'app:tutor_detail' tutor.slug %}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1">{{ tutor.user.get_full_name }}</h6>
+                  <small>⭐ {{ tutor.average_rating }}/5</small>
+                </div>
+                <p class="mb-1 text-muted">{{ tutor.bio|truncatewords:10 }}</p>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">У вас нет избранных репетиторов</p>
+          <a href="{% url 'app:tutors_list' %}" class="btn btn-sm btn-primary">Найти репетиторов</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Последние уроки</h5>
+      </div>
+      <div class="card-body">
+        {% if lessons %}
+          <div class="list-group">
+            {% for lesson in lessons|slice:":5" %}
+              <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1">{{ lesson.discipline.name }}</h6>
+                  <small>{{ lesson.scheduled_at|date:"d.m.Y H:i" }}</small>
+                </div>
+                <p class="mb-1 text-muted">Репетитор: {{ lesson.tutor.user.get_full_name }}</p>
+                <small class="text-success">Стоимость: {{ lesson.total_price }} ₽</small>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">У вас нет забронированных уроков</p>
+          <a href="{% url 'app:tutors_list' %}" class="btn btn-sm btn-primary">Забронировать урок</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Мои отзывы</h5>
+      </div>
+      <div class="card-body">
+        {% if reviews %}
+          {% for review in reviews %}
+            <div class="border-bottom pb-3 mb-3">
+              <div class="d-flex justify-content-between">
+                <h6>{{ review.tutor.user.get_full_name }}</h6>
+                <span class="badge bg-warning">
+                  {% for i in "12345" %}
+                    {% if i|add:"0" <= review.grade %}⭐{% endif %}
+                  {% endfor %}
+                  {{ review.grade }}/5
+                </span>
+              </div>
+              <p class="text-muted mb-1">{{ review.created_at|date:"d.m.Y" }}</p>
+              <p>{{ review.text }}</p>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted">Вы еще не писали отзывов</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

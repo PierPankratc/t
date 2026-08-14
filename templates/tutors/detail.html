@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ tutor.name }} — Профиль{% endblock %}
+{% block title %}{{ tutor.user.get_full_name }} — Профиль{% endblock %}
 
 {% block content %}
 <style>
@@ -28,66 +28,103 @@
 
 <div class="row">
   <div class="col-md-4">
-    {% if tutor.avatar and tutor.avatar.url %}
-      <img src="{{ tutor.avatar.url }}" class="img-fluid rounded mb-3 tutor-photo" alt="{{ tutor.name }}">
+    {% if tutor.user.profile.avatar and tutor.user.profile.avatar.url %}
+      <img src="{{ tutor.user.profile.avatar.url }}" class="img-fluid rounded mb-3 tutor-photo" alt="{{ tutor.user.get_full_name }}">
     {% else %}
-      <img src="/media/photos/OIP-2342034818.jpg" class="img-fluid rounded mb-3 tutor-photo" alt="{{ tutor.name }}">
+      <div class="bg-secondary rounded mb-3 tutor-photo d-flex align-items-center justify-content-center text-white" style="font-size: 3rem;">
+        👨‍🏫
+      </div>
     {% endif %}
     <div class="mb-3">
-      <button class="favorite-btn not-favorite w-100" data-tutor-slug="{{ tutor.slug }}" id="favorite-btn" style="border: 1px solid #ddd; padding: 0.75rem; font-size: 1rem;">
-        ♡ Добавить в избранное
+      <button class="favorite-btn {% if is_favorite %}is-favorite{% else %}not-favorite{% endif %} w-100" data-tutor-slug="{{ tutor.slug }}" id="favorite-btn" style="border: 1px solid #ddd; padding: 0.75rem; font-size: 1rem;">
+        {% if is_favorite %}♥ Удалить из избранного{% else %}♡ Добавить в избранное{% endif %}
       </button>
     </div>
     <ul class="list-group">
-      <li class="list-group-item"><strong>Имя:</strong> {{ tutor.name }}</li>
-      <li class="list-group-item"><strong>Email:</strong> {{ tutor.email }}</li>
-      <li class="list-group-item"><strong>Телефон:</strong> {{ tutor.phone_number }}</li>
+      <li class="list-group-item"><strong>Имя:</strong> {{ tutor.user.get_full_name }}</li>
+      <li class="list-group-item"><strong>Email:</strong> {{ tutor.user.email }}</li>
+      <li class="list-group-item"><strong>Телефон:</strong> {{ tutor.user.profile.phone_number|default:"—" }}</li>
       <li class="list-group-item"><strong>Возраст:</strong> {{ tutor.age|default:"—" }}</li>
-      <li class="list-group-item"><strong>Высшее образование:</strong> {{ tutor.is_high_edu|yesno:"Да,Нет" }}</li>
+      <li class="list-group-item"><strong>Опыт:</strong> {{ tutor.experience_years }} лет</li>
+      <li class="list-group-item"><strong>Образование:</strong> {{ tutor.is_high_edu|yesno:"Да,Нет" }}</li>
+      <li class="list-group-item"><strong>Рейтинг:</strong> ⭐ {{ tutor.average_rating }}/5</li>
     </ul>
   </div>
   <div class="col-md-8">
     <h3>О репетиторе</h3>
-    <p>{{ tutor.description|default:"Нет описания" }}</p>
+    <p>{{ tutor.bio|default:"Нет описания" }}</p>
 
-    <h4 class="mt-4">Предметы</h4>
-    <ul>
-      {% for d in disciplines %}
-        <li>{{ d.name }} — {{ d.price }} ₽ за {{ d.durations }} мин</li>
-      {% empty %}
-        <li>Нет предметов</li>
-      {% endfor %}
-    </ul>
-
-    <h4 class="mt-4">Отзывы</h4>
-    {% for r in reviews %}
-      <div class="border rounded p-2 mb-2">
-        <strong>Оценка:</strong> {{ r.grade }}<br>
-        <p>{{ r.review }}</p>
+    <h4 class="mt-4">Предметы ({{ disciplines.count }})</h4>
+    {% if disciplines %}
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Предмет</th>
+              <th>Цена</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in disciplines %}
+              <tr>
+                <td><strong>{{ d.name }}</strong></td>
+                <td>{{ d.price_per_hour }} ₽/час</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-    {% empty %}
-      <p>Нет отзывов</p>
-    {% endfor %}
+    {% else %}
+      <p class="text-muted">Нет предметов</p>
+    {% endif %}
 
-    <h4 class="mt-4">Похожие преподаватели</h4>
-    <div class="row">
-      {% for rec in recommendations %}
-        <div class="col-md-6 mb-3">
-          <div class="card">
-            {% if rec.avatar and rec.avatar.url %}
-              <img src="{{ rec.avatar.url }}" class="card-img-top" alt="{{ rec.name }}" style="height: 150px; object-fit: cover;">
-            {% else %}
-              <img src="/media/photos/OIP-2342034818.jpg" class="card-img-top" alt="{{ rec.name }}" style="height: 150px; object-fit: cover;">
-            {% endif %}
-            <div class="card-body">
-              <h5 class="card-title">{{ rec.name }}</h5>
-              <p class="card-text small">{{ rec.description|truncatewords:15 }}</p>
-              <a href="{% url 'tutors:detail' rec.slug %}" class="btn btn-sm btn-primary">Открыть</a>
-            </div>
+    <h4 class="mt-4">Отзывы ({{ reviews.count }})</h4>
+    {% if reviews %}
+      {% for r in reviews %}
+        <div class="border rounded p-3 mb-2">
+          <div class="d-flex justify-content-between mb-2">
+            <strong>{{ r.student.get_full_name }}</strong>
+            <span class="badge bg-warning">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= r.grade %}⭐{% endif %}
+              {% endfor %}
+              {{ r.grade }}/5
+            </span>
           </div>
+          <small class="text-muted d-block mb-2">{{ r.created_at|date:"d.m.Y" }}</small>
+          <p class="mb-0">{{ r.text }}</p>
         </div>
       {% endfor %}
-    </div>
+    {% else %}
+      <p class="text-muted">Нет отзывов</p>
+    {% endif %}
+
+    <h4 class="mt-4">Похожие преподаватели</h4>
+    {% if recommendations %}
+      <div class="row">
+        {% for rec in recommendations %}
+          <div class="col-md-6 mb-3">
+            <div class="card">
+              {% if rec.user.profile.avatar and rec.user.profile.avatar.url %}
+                <img src="{{ rec.user.profile.avatar.url }}" class="card-img-top" alt="{{ rec.user.get_full_name }}" style="height: 150px; object-fit: cover;">
+              {% else %}
+                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white" style="height: 150px; font-size: 2rem;">
+                  👨‍🏫
+                </div>
+              {% endif %}
+              <div class="card-body">
+                <h5 class="card-title">{{ rec.user.get_full_name }}</h5>
+                <small class="text-warning">⭐ {{ rec.average_rating }}/5</small>
+                <p class="card-text small">{{ rec.bio|truncatewords:15 }}</p>
+                <a href="{% url 'app:tutor_detail' rec.slug %}" class="btn btn-sm btn-primary">Открыть</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">Похожих преподавателей не найдено</p>
+    {% endif %}
   </div>
 </div>
 
@@ -98,7 +135,6 @@ document.querySelectorAll('.favorite-btn').forEach(button => {
     const tutorSlug = this.dataset.tutorSlug;
     const btn = this;
     
-    // Получить CSRF токен из мета-тега
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     
     fetch(`/tutors/${tutorSlug}/toggle-favorite/`, {
@@ -128,7 +164,6 @@ document.querySelectorAll('.favorite-btn').forEach(button => {
           btn.textContent = '♡ Добавить в избранное';
           btn.title = 'Добавить в избранное';
         }
-        console.log(data.message);
       } else if (data.error) {
         console.error('Error:', data.error);
         alert('Ошибка: ' + data.error);
