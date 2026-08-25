@@ -29,13 +29,13 @@ class StudentRegistrationForm(UserCreationForm):
             'placeholder': 'Фамилия'
         })
     )
-    password1 = forms.CharField(
+    password = forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'placeholder': 'Пароль'
         })
     )
-    password2 = forms.CharField(
+    rewrite_password = forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'placeholder': 'Подтвердите пароль'
@@ -134,15 +134,15 @@ class TutorRegistrationForm(UserCreationForm):
             'placeholder': 'Лет опыта'
         })
     )
-    bio = forms.CharField(
-        max_length=500,
-        required=False,
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'placeholder': 'Расскажите о себе',
-            'rows': 4
-        })
-    )
+    # about = forms.CharField(
+    #     max_length=500,
+    #     required=False,
+    #     widget=forms.Textarea(attrs={
+    #         'class': 'form-control',
+    #         'placeholder': 'Расскажите о себе',
+    #         'rows': 4
+        # })
+    # )
     is_high_edu = forms.BooleanField(
         required=False,
         widget=forms.CheckboxInput(attrs={
@@ -153,7 +153,7 @@ class TutorRegistrationForm(UserCreationForm):
     
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'password1', 'password2', 'phone_number', 'age', 'experience_years', 'bio', 'is_high_edu')
+        fields = ('first_name', 'last_name', 'email', 'password1', 'password2', 'phone_number', 'age', 'experience_years','is_high_edu')
     
     def clean_email(self):
         email = self.cleaned_data.get('email')

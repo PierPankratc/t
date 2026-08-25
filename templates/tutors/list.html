@@ -1,128 +1,114 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<style>
-  .favorite-btn {
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 1.5rem;
-    padding: 0.5rem;
-    transition: all 0.3s ease;
-  }
-  
-  .favorite-btn.not-favorite {
-    color: #ddd;
-  }
-  
-  .favorite-btn.is-favorite {
-    color: #ff6b6b;
-  }
-  
-  .favorite-btn:hover {
-    transform: scale(1.2);
-  }
-  
-  .btn-favorites {
-    margin-bottom: 1rem;
-  }
-</style>
-
-<div class="mb-3">
-  <a href="{% url 'app:favorites' %}" class="btn btn-outline-danger btn-favorites">
-    ❤️ Мои избранные преподаватели
-  </a>
-</div>
-
-<div class="row">
-  {% for tutor in tutors %}
-    <div class="col-md-4 mb-3">
-      <div class="card h-100">
-        {% if tutor.user.profile.avatar and tutor.user.profile.avatar.url %}
-          <img src="{{ tutor.user.profile.avatar.url }}" class="card-img-top tutor-photo-sm" alt="{{ tutor.user.get_full_name }}">
-        {% else %}
-          <div class="card-img-top tutor-photo-sm bg-secondary d-flex align-items-center justify-content-center text-white">
-            <span>Нет фото</span>
-          </div>
-        {% endif %}
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <div>
-              <h5 class="card-title mb-0">{{ tutor.user.get_full_name }}</h5>
-              <small class="text-warning">⭐ {{ tutor.average_rating }}/5</small>
-            </div>
-            <button class="favorite-btn {% if is_favorite %}is-favorite{% else %}not-favorite{% endif %}" data-tutor-slug="{{ tutor.slug }}" title="{% if is_favorite %}Удалить{% else %}Добавить{% endif %} в избранное">
-              {% if is_favorite %}♥{% else %}♡{% endif %}
-            </button>
-          </div>
-          <p class="card-text small">{{ tutor.bio|truncatewords:15|default:"Нет описания" }}</p>
-          <p class="small mb-2">
-            <strong>Опыт:</strong> {{ tutor.experience_years }} лет<br>
-            {% if tutor.is_high_edu %}<strong>✓</strong> Высшее образование{% endif %}
-            <a href="{% url 'app:tutor_detail' tutor.slug|default:'no-slug' %}" class="btn btn-primary btn-sm w-100">
-    Открыть профиль
-</a>
-          </p>
-        </div>
-      </div>
-    </div>
-  {% empty %}
-    <div class="col-12">
-      <div class="alert alert-info">
-        Преподавателей не найдено. Попробуйте изменить параметры поиска.
-      </div>
-    </div>
-  {% endfor %}
-</div>
-
-<script>
-document.querySelectorAll('.favorite-btn').forEach(button => {
-  button.addEventListener('click', function(e) {
-    e.preventDefault();
-    const tutorSlug = this.dataset.tutorSlug;
-    const btn = this;
-    
-    // Получить CSRF токен из мета-тега
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    
-    fetch(`/tutors/${tutorSlug}/toggle-favorite/`, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': csrfToken,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({})
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data.success) {
-        if (data.is_favorite) {
-          btn.classList.remove('not-favorite');
-          btn.classList.add('is-favorite');
-          btn.textContent = '♥';
-          btn.title = 'Удалить из избранного';
-        } else {
-          btn.classList.remove('is-favorite');
-          btn.classList.add('not-favorite');
-          btn.textContent = '♡';
-          btn.title = 'Добавить в избранное';
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список репетиторов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        console.log(data.message);
-      } else if (data.error) {
-        console.error('Error:', data.error);
-        alert('Ошибка: ' + data.error);
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Ошибка при добавлении в избранное: ' + error.message);
-    });
-  });
-});
-</script>
-{% endblock %}
+        .sort-block {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        .sort-block a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #0066cc;
+        }
+        .sort-block a:hover {
+            text-decoration: underline;
+        }
+        .sort-block a.active {
+            font-weight: bold;
+            color: #003366;
+        }
+        .tutor-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tutor-card h3 {
+            margin: 0 0 10px 0;
+        }
+        .tutor-card .rating {
+            color: #ff9900;
+            font-weight: bold;
+        }
+        .tutor-card .meta {
+            color: #666;
+            font-size: 14px;
+        }
+        .badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Наши репетиторы</h1>
+
+    <!-- Блок сортировки -->
+    <div class="sort-block">
+        <span>Сортировать:</span>
+        <a href="?sort=rating" class="{% if sort == 'rating' or not sort %}active{% endif %}">По рейтингу</a>
+        <a href="?sort=last" class="{% if sort == 'last' %}active{% endif %}">Сначала новые</a>
+        <a href="?sort=high_edu" class="{% if sort == 'high_edu' %}active{% endif %}">С высшим образованием</a>
+    </div>
+
+    <!-- Список репетиторов -->
+    <div class="tutor-list">
+        {% if tutors %}
+            {% for tutor in tutors %}
+                <div class="tutor-card">
+                    <h3>
+                        {{ tutor.user.get_full_name|default:tutor.user.username }}
+                        {% if tutor.is_high_edu %}
+                            <span class="badge">🎓 Высшее образование</span>
+                        {% endif %}
+                    </h3>
+                    <div class="meta">
+                        <span>📅 Присоединился: {{ tutor.created_at|date:"d.m.Y" }}</span>
+                    </div>
+                    <div class="rating">
+                        ⭐ Рейтинг: {{ tutor.average_rating|default:"Нет оценок" }}
+                    </div>
+                    {% if tutor.specialization %}
+                        <div class="meta">
+                            📚 Специализация: {{ tutor.specialization }}
+                        </div>
+                    {% endif %}
+                    <div class="meta">
+                        📧 {{ tutor.user.email }}
+                    </div>
+                    <a href="{% url 'tutor_detail' tutor.id %}">Подробнее →</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">
+                <p>😔 Репетиторы не найдены</p>
+                <p>Попробуйте изменить условия поиска</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
